@@ -94,8 +94,8 @@ def apply_qc(in_tracks:Dict[int,Dict[int,DataFrame]],
     #trim tracks
     #input: dict (trim) of elements with the form {(movie, track):(begginning frame, end frame)]
     #trim={(7,1):(1,53)}
-    trims:Dict[int,Dict[int,Tuple[int,int]]] = {};
-    for (mov,track),(start,end) in trim.items():    
+    trims:Dict[int,Dict[int,Tuple[int,int]]] = DefaultDict(lambda: {});
+    for (mov,track),(start,end) in trim.items():
         if track == -1:
             trims[mov] = DefaultDict(lambda: (start,end));
         else:
