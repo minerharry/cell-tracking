@@ -1,9 +1,10 @@
 #modified from
 #https://github.com/juglab/EmbedSeg/blob/main/EmbedSeg/utils/generate_crops.py
   
-import os
+from typing import Iterable
+from warnings import warn
+import cv2
 import numpy as np
-import tifffile
 from scipy.ndimage.measurements import find_objects
 from scipy.ndimage.morphology import binary_fill_holes
 from scipy.spatial import distance_matrix
@@ -26,7 +27,7 @@ def pairwise_python(X):
             D[i, j] = np.sqrt(d)
     return D
 '''
-def get_centers(instance, center, ids, one_hot):
+def get_centers(instance:np.ndarray, center, ids:Iterable[int], one_hot):
     """
         Get the centers of all the labeled objects in a mask
         ----------
@@ -47,9 +48,10 @@ def get_centers(instance, center, ids, one_hot):
         center_image = np.zeros((instance.shape[-2], instance.shape[-1]), dtype=bool)
     for j, id in enumerate(ids):
         if (not one_hot):
-            y, x = np.where(instance == id)
+            mask = (instance == id)
         else:
-            y, x = np.where(instance[id] == 1)
+            mask = (instance[id] == 1)
+        y,x = np.where(mask)
         if len(y) != 0 and len(x) != 0:
             if (center == 'centroid'):
                 ym, xm = np.mean(y), np.mean(x)
@@ -79,6 +81,39 @@ def get_centers(instance, center, ids, one_hot):
                 mindist = np.min(dist_matrix, 1)                
                 imax = np.argmax(mindist)
                 ym, xm = y[imax], x[imax]
+
+            elif (center == "ellipse-center"):
+                # print(mask)
+                # print(mask.dtype)
+                contours,_ = cv2.findContours(mask.astype("uint8"),cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE);
+                if len(contours) > 1:
+                    warn("Multiple contours detected for id " + str(id) + ",using only the first one...")
+                print(len(contours[0]))
+                try:
+                    cpos,size,rotation = cv2.fitEllipseDirect(contours[0])
+                except cv2.error as e:
+                    if "Incorrect size of input array" in e.msg:
+                        raise Exception(f"object with id {id} too small to get contours for ellipse fitting")
+                    else:
+                        raise e
+                    # continue
+                print(x[0],y[0])
+                print(x[-1],y[-1])
+                print(cpos)
+                print((int(cpos[1]),int(cpos[0])))
+                
+                instance[:,:] = cv2.circle(instance.astype("uint8"),(int(cpos[0]),int(cpos[1])),3,40,-10)
+
+                # print(m)
+                # instance[int(center[1]),int(center[0])] = 20
+                xm,ym = cpos
+                # return instance
+                # print(x[-1],y[-1])
+                # print(ellipse)
+                # pass
+            else:
+                raise Exception("Unrecognized center type:",center)
+
                 
             centers.append([xm,ym])
     return centers
@@ -104,32 +139,9 @@ def generate_center_image(instance, center, ids, one_hot):
         center_image = np.zeros(instance.shape, dtype=bool)
     else:
         center_image = np.zeros((instance.shape[-2], instance.shape[-1]), dtype=bool)
-    for j, id in enumerate(ids):
-        if (not one_hot):
-            y, x = np.where(instance == id)
-        else:
-            y, x = np.where(instance[id] == 1)
-        if len(y) != 0 and len(x) != 0:
-            if (center == 'centroid'):
-                ym, xm = np.mean(y), np.mean(x)
-            elif (center == 'approximate-medoid'):
-                ym_temp, xm_temp = np.median(y), np.median(x)
-                imin = np.argmin((x - xm_temp) ** 2 + (y - ym_temp) ** 2)
-                ym, xm = y[imin], x[imin]
-            elif (center == 'medoid'):
-                ### option - 1 (scipy `distance_matrix`) (slow-ish)
-                dist_matrix = distance_matrix(np.vstack((x, y)).transpose(), np.vstack((x, y)).transpose())
-                imin = np.argmin(np.sum(dist_matrix, axis=0))
-                ym, xm = y[imin], x[imin]
-                
-                ### option - 2 (`hdmedoid`) (slightly faster than scipy `distance_matrix`)
-                #ym, xm = hd.medoid(np.vstack((y,x))) 
-                
-                ### option - 3 (`numba`) 
-                #dist_matrix = pairwise_python(np.vstack((x, y)).transpose())
-                #imin = np.argmin(np.sum(dist_matrix, axis=0))
-                #ym, xm = y[imin], x[imin]		
-            center_image[int(np.round(ym)), int(np.round(xm))] = True
+    centers = get_centers(instance,center,ids,one_hot)
+    for x,y in centers:
+        center_image[y][x] = True
     return center_image
 
 
