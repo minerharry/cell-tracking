@@ -27,7 +27,9 @@ def pairwise_python(X):
             D[i, j] = np.sqrt(d)
     return D
 '''
-def get_centers(instance:np.ndarray, center, ids:Iterable[int], one_hot):
+
+valid_centers = ["centroid","approximate-medoid","medoid","largest-circle","ellipse"]
+def get_centers(instance:np.ndarray, center:str, ids:Iterable[int], one_hot:bool):
     """
         Get the centers of all the labeled objects in a mask
         ----------
@@ -42,11 +44,7 @@ def get_centers(instance:np.ndarray, center, ids:Iterable[int], one_hot):
             True (in this case, `instance` has shape DYX) or False (in this case, `instance` has shape YX).
     """
     centers=[]
-    if (not one_hot):
-        center_image = np.zeros(instance.shape, dtype=bool)
-    else:
-        center_image = np.zeros((instance.shape[-2], instance.shape[-1]), dtype=bool)
-    for j, id in enumerate(ids):
+    for _, id in enumerate(ids):
         if (not one_hot):
             mask = (instance == id)
         else:
@@ -82,13 +80,10 @@ def get_centers(instance:np.ndarray, center, ids:Iterable[int], one_hot):
                 imax = np.argmax(mindist)
                 ym, xm = y[imax], x[imax]
 
-            elif (center == "ellipse-center"):
-                # print(mask)
-                # print(mask.dtype)
+            elif (center == "ellipse"):
                 contours,_ = cv2.findContours(mask.astype("uint8"),cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE);
                 if len(contours) > 1:
                     warn("Multiple contours detected for id " + str(id) + ",using only the first one...")
-                print(len(contours[0]))
                 try:
                     cpos,size,rotation = cv2.fitEllipseDirect(contours[0])
                 except cv2.error as e:
@@ -96,27 +91,19 @@ def get_centers(instance:np.ndarray, center, ids:Iterable[int], one_hot):
                         raise Exception(f"object with id {id} too small to get contours for ellipse fitting")
                     else:
                         raise e
-                    # continue
-                print(x[0],y[0])
-                print(x[-1],y[-1])
-                print(cpos)
-                print((int(cpos[1]),int(cpos[0])))
-                
+
                 instance[:,:] = cv2.circle(instance.astype("uint8"),(int(cpos[0]),int(cpos[1])),3,40,-10)
 
-                # print(m)
-                # instance[int(center[1]),int(center[0])] = 20
                 xm,ym = cpos
-                # return instance
-                # print(x[-1],y[-1])
-                # print(ellipse)
-                # pass
+
             else:
                 raise Exception("Unrecognized center type:",center)
 
                 
             centers.append([xm,ym])
     return centers
+get_centers.valid_centers = valid_centers ##you can just do this apparently
+
 
 
 def generate_center_image(instance, center, ids, one_hot):
