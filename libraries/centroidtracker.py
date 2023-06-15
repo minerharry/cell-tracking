@@ -83,14 +83,17 @@ class CentroidTracker(Generic[T]):
             # centroids and input centroids, respectively -- our
             # goal will be to match an input centroid to an existing
             # object centroid
-            # print(np.array(objectCentroids).shape, np.array(inputCentroids).shape)
             if self.distance_key is None:
                 D = dist.cdist(np.array(objectCentroids), np.array(inputCentroids));
             else:
-                # print(np.array([[i] for i in inputCentroids],dtype='obj').shape);
-                # print(np.array([self.Dum(i) for i in inputCentroids]).reshape(-1,1).shape);
+                ##the object being used must NOT be arraylike or iterable or numpy will expand it. 
+                ##Since we may be using dataframes or arrays, wrap in a noniterable class to fix this
+                ##Once again: hate
                 D = dist.cdist(np.array([self.Dum(o) for o in objectCentroids]).reshape(-1,1), np.array([self.Dum(i) for i in inputCentroids]).reshape(-1,1),metric=lambda x,y: self.distance_key(x[0].val,y[0].val));
 
+
+            ## apply frame filter: to any pairing we deem "unsatisfactory", make it the biggest value so it's never prioritized
+            ## also save said value so that when pulled as a last resort, the match can be discarded
             biggest = np.max(D) + 2;
             if self.frame_filter:
                 filtered_out = [i for i in np.ndindex(*D.shape) if not(self.frame_filter(
@@ -109,16 +112,18 @@ class CentroidTracker(Generic[T]):
             # in order to perform this matching we must (1) find the
             # smallest value in each row and then (2) sort the row
             # indexes based on their minimum values so that the row
-            # with the smallest value as at the *front* of the index
-            # list
+            # with the smallest value as at the *front* of the index list
             rows = np.min(D,axis=1).argsort()
 
 
             # next, we perform a similar process on the columns by
             # finding the smallest value in each column and then
             # sorting using the previously computed row index list
-
             cols = np.argmin(D,axis=1,)[rows]
+
+            # the resulting list of pairs (from zip(rows,cols)) gives us 
+            # the coordinates of the smallest value in the table,
+            # the coordinates of the next smallest value including the 
 
 
             # in order to determine if we need to update, register,
@@ -129,12 +134,10 @@ class CentroidTracker(Generic[T]):
 
             # loop over the combination of the (row, column) index
             # tuples
-            falseConversions = False;
             for (row, col) in zip(rows, cols):
                 # print(D[row,col],row,col);
-                if (D[row,col].item()) == biggest:
+                if (D[row,col].item()) == biggest: #cell match is not allowed
                     # print("bigelow");
-                    falseConversions = True;
                     continue;
                 # if we have already examined either the row or
                 # column value before, ignore it - that object has already been matched
@@ -167,9 +170,9 @@ class CentroidTracker(Generic[T]):
                 self.disappeared[objectID] += 1
 
                 # check to see if the number of consecutive
-                # frames the object has been marked "disappeared"
-                # for warrants deregistering the object
-                # also deregister if the object has not been actively
+                # frames for which the object has been marked "disappeared"
+                # warrants deregistering the object
+                # also deregister if the object has not been actively tracked
                 # for enough time to warrant keeping it
                 if self.disappeared[objectID] > self.maxDisappeared or self.active_time[objectID] < self.minPersistence:
                     self.deregister(objectID)

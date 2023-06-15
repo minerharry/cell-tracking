@@ -72,6 +72,8 @@ def grouped_dir(paths:List[str]):
         out.append(sorted_dir(g));
     return out;
 
+
+##takes a stage dict and groups stages with the same nonnumeric prefix together (good for the metamorph stage position naming scheme)
 def group_stage_basenames(stage_dict:Dict[int,str]):
     invmap = {v:k for k,v in stage_dict.items()};
     order = sorted(invmap.keys());
