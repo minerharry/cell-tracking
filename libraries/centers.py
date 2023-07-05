@@ -99,9 +99,9 @@ def getellipse(mask:np.ndarray):
 
 def get_appmedoid(mask:Union[np.ndarray,None]=None,x:Union[np.ndarray,None]=None,y:Union[np.ndarray,None]=None):
     if x is None or y is None:
-        y,x = np.where(mask)
-    else:
         assert mask is not None
+        y,x = np.where(mask)
+        # ,f"x: {x is None}, y: {y is None}, mask: {mask}"
     ym_temp, xm_temp = np.median(y), np.median(x)
     imin = np.argmin((x - xm_temp) ** 2 + (y - ym_temp) ** 2)
     ym, xm = y[imin], x[imin]

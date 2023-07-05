@@ -1,7 +1,10 @@
 ##FMI: two axis (x and y) - total displacement in the axis across a track divided by the total distance traveled by the cell
+from collections import UserDict
 import csv
 import math
-from typing import Any, Dict, Tuple
+import os
+from pathlib import Path
+from typing import Any, Dict, Mapping, Tuple, Union
 from fastprogress import master_bar,progress_bar
 import numpy as np
 from pandas import DataFrame
@@ -25,7 +28,56 @@ def scale_tracks(in_tracks:Dict[int,Dict[int,pd.DataFrame]],centertype:str,dista
 def dist(x1,x2,y1,y2):
   return math.sqrt((x1-x2)**2+(y1-y2)**2)
 
-def analyze_experiment_tracks(scaled_tracks:Dict[int,Dict[int,DataFrame]],centertype:str,do_progressbar=True)->Dict[str,Dict[int,Any]]:
+
+class ExperimentAnalysis(Mapping[str,Any]):
+    scaled_tracks:Dict[int,Dict[int,DataFrame]] = {};
+
+    FMI: Dict[int,Dict[int,Tuple[float,float]]] = {}; #{movie, {trackid:(FMI.x,FMI.y)}}
+    Persistence: Dict[int,Dict[int,float]] = {}; #{movie, {trackid:Persistence}}
+    trackVelocity: Dict[int,Dict[int,Tuple[float,float,float]]] = {}; #{movie, {trackid:(velocityX,velocityY,velocityMag)}}
+    trackDisplacement: Dict[int,Dict[int,Tuple[float,float,float]]] = {}; #{movie, {trackid:(displacementX,displacementY,displacementDist)}}
+    trackLength: Dict[int,Dict[int,float]] = {}; #{movie, {trackid:tracklength}}
+    trackTime: Dict[int,Dict[int,int]] = {}; #{movie, {trackid:trackTime}}
+
+    avgFMI: Dict[int,Tuple[float,float]] = {}; #{movie,(avgX,avgY)};
+    avgPersistence: Dict[int,float] = {}; #{movie,average};
+    avgVelocity: Dict[int,Tuple[float,float,float]] = {}; #{movie,(averageX,averagyY,averageMag)};
+    avgDisplacement: Dict[int,Tuple[float,float,float]] = {}; #{movie,(avgX,avgY,avgDist)}
+    avgTracklength: Dict[int,float] = {}; #{movie,average}
+    avgTracktime: Dict[int,float] = {};
+
+    _keys = ([k for k,v in locals().items() if not k.startswith("_")]) #all typed variables
+
+    def __init__(self,analysis:Dict[str,Any]) -> None:
+        for k in analysis:
+            if k in self._keys:
+                setattr(self,k,analysis[k])
+            else:
+                raise KeyError(k)
+        
+        for k in self._keys:
+            if k not in analysis:
+                raise ValueError(f"Analysis missing key {k}")
+
+    def __len__(self):
+        return len(self._keys)
+
+    def __iter__(self):
+        return iter(self._keys)
+    
+    def keys(self):
+        return self._keys
+    
+    def __contains__(self, __o: object) -> bool:
+        return __o in self._keys;
+
+    def __getitem__(self,key:str):
+        if key in self._keys:
+            return getattr(self,key)
+        else:
+            raise KeyError(key)
+
+def analyze_experiment_tracks(scaled_tracks:Dict[int,Dict[int,DataFrame]],centertype:str,do_progressbar:bool=True)->ExperimentAnalysis:
     FMI: Dict[int,Dict[int,Tuple[float,float]]] = {}; #{movie, {trackid:(FMI.x,FMI.y)}}
     Persistence: Dict[int,Dict[int,float]] = {}; #{movie, {trackid:Persistence}}
     trackVelocity: Dict[int,Dict[int,Tuple[float,float,float]]] = {}; #{movie, {trackid:(velocityX,velocityY,velocityMag)}}
@@ -44,6 +96,7 @@ def analyze_experiment_tracks(scaled_tracks:Dict[int,Dict[int,DataFrame]],center
     result.update(locals())
     del result['centertype']
     del result['result']
+    del result['do_progressbar']
 
 
 
@@ -141,9 +194,9 @@ def analyze_experiment_tracks(scaled_tracks:Dict[int,Dict[int,DataFrame]],center
             avgTracklength[movie] = 0
             avgTracktime[movie] = 0
 
-    return result
+    return ExperimentAnalysis(result)
 
-def save_tracks_analysis_csv(local_path,tracks_analysis,distance_unit,time_unit):
+def save_tracks_analysis_csv(local_path:Union[str,Path,os.PathLike],tracks_analysis:Union[ExperimentAnalysis,Dict[str,Any]],distance_unit:str,time_unit:str):
     with open(local_path,"w", newline='') as file:
         fieldnames = ['movie', 'trackid','FMI.x','FMI.y',f'Velocity.x ({distance_unit}/{time_unit})',f'Velocity.y ({distance_unit}/{time_unit})',f'Speed ({distance_unit}/{time_unit})','Persistence',f'Displacement.x ({distance_unit})',f'Displacement.y ({distance_unit})',f'Displacement Distance ({distance_unit})',f'Tracklength ({distance_unit})',f'Track time ({time_unit})'];
         writer = csv.DictWriter(file, fieldnames=fieldnames);
