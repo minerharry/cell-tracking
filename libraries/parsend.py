@@ -5,7 +5,7 @@ import re
 from typing import Dict, List, Tuple
 series_regex = "s([0-9]+)"
 time_regex = "t([0-9]+)"
-filename_regex = 'p[0-9]*_s([0-9]+)_t([0-9]+).*\.(TIF|TIFF|tif|tiff)';
+filename_regex = r'p[0-9]*_s([0-9]+)_t([0-9]+).*\.(TIF|TIFF|tif|tiff)';
 
 ##Parses .nd files from metamorph on the optotaxis microscope
 
