@@ -145,8 +145,8 @@ def analyze_experiment_tracks(scaled_tracks:Dict[int,Dict[int,DataFrame]],center
             yDisp = (end[centery] - start[centery]);
 
             ##Get individual cell FMI
-            xMI = xDisp/accDist;
-            yMI = yDisp/accDist;
+            xMI = xDisp/accDist if accDist != 0 else xDisp*0;
+            yMI = yDisp/accDist if accDist != 0 else yDisp*0;
 
             FMI[movie][id] = (xMI,yMI);
 
@@ -154,7 +154,7 @@ def analyze_experiment_tracks(scaled_tracks:Dict[int,Dict[int,DataFrame]],center
             netDist = math.sqrt(xDisp**2 + yDisp**2);
 
             ## Get Persistence
-            direct = netDist/accDist;
+            direct = netDist/accDist if accDist != 0 else 0;
             Persistence[movie][id] = direct;
 
             ##Get Average Velocity
