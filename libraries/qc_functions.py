@@ -134,12 +134,9 @@ def apply_qc(in_tracks:Dict[int,Dict[int,DataFrame]],
             sampTrStatus[mov][track]=0
         
 
-        #only keep certain tracks
+        #override keep certain tracks
         #input: dict of elements of the form {movie:[track1,track2,...]}
         for mov,tracks in keep.items():
-            #for all the tracks in movie i[0]-1 turn off all the tracks
-            for itracks in sampTrStatus[mov]:
-                sampTrStatus[mov][itracks]=0
             #turn on the desired tracks
             for itracks in tracks:
                 sampTrStatus[mov][itracks]=1

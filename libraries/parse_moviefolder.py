@@ -1,5 +1,5 @@
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING,Union
 # import ultraimport
 
 # if TYPE_CHECKING:
@@ -12,7 +12,7 @@ filename_regex = r'(p[0-9]*)_s([0-9]+)_t([0-9]+).*(\.TIF|\.TIFF|\.tif|\.tiff)';
 filename_format = "{}_s{}_t{}{}"
 
 
-def get_movie_params(folder:str,regex:str|re.Pattern=filename_regex):
+def get_movie_params(folder:str,regex:Union[str,re.Pattern=filename_regex]):
     imagematches = [m for m in (re.match(filename_regex,s) for s in os.listdir(folder)) if m is not None]
     movies = list(set([m.group(0) for m in imagematches if m is not None]))
     
