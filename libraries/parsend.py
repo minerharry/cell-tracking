@@ -3,9 +3,9 @@ from msilib.schema import Error
 import random
 import re
 from typing import Dict, List, Tuple
+from libraries.parse_moviefolder import filename_regex
 series_regex = "s([0-9]+)"
 time_regex = "t([0-9]+)"
-filename_regex = r'p[0-9]*_s([0-9]+)_t([0-9]+).*\.(TIF|TIFF|tif|tiff)';
 
 ##Parses .nd files from metamorph on the optotaxis microscope
 
@@ -61,7 +61,7 @@ def sorted_dir(paths:List[str]):
 
 def stage_from_name(name:str):
     m = re.match(filename_regex,name);
-    return m.group(1) if m else "-1";
+    return m.group(2) if m else "-1";
 
 def grouped_dir(paths:List[str]):
     out = [];

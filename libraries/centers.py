@@ -82,7 +82,7 @@ get_centers.valid_centers = valid_centers ##you can just do this apparently
 
 
 def getellipse(mask:np.ndarray):
-    contours,_ = cv2.findContours(mask.astype("uint8"),cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE);
+    contours,_ = cv2.findContours(mask.astype("uint8"),cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE);
     if len(contours) > 1:
         warn("Multiple contours detected for id " + str(id) + ",using only the first one...")
     try:
