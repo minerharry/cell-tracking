@@ -1,16 +1,12 @@
 
-from typing import TYPE_CHECKING, Dict, List, Literal, Sequence, Tuple, Union, overload
-# import ultraimport
-
-# if TYPE_CHECKING:
+from typing import Dict, List, Literal, Sequence, Tuple, Union, overload
 from libraries.movie_reading import ImageMapMovie
-# else:
-#     ImageMapMovie = ultraimport.ultraimport("libraries/movie_reading.py","ImageMapMovie")
 import os
 import re
-filename_regex = r'(p[0-9]*)_s([0-9]+)_t([0-9]+).*(\.TIF|\.TIFF|\.tif|\.tiff)';
-filename_regex_alphanumeric = r'(p[0-9]*)_s([^_]+)_t([0-9]+).*(\.TIF|\.TIFF|\.tif|\.tiff)';
-filename_format = "{}_s{}_t{}{}"
+from libraries.filenames import filename_regex_alphanumeric,filename_regex
+
+
+
 
 @overload
 def get_movie_params(folder:str,regex:Union[str,re.Pattern,None]=None,alphanumeric_movie:Literal[False]=...)->Tuple[str,Sequence[int],Dict[int,Sequence[int]],str]: ...
@@ -48,13 +44,13 @@ def get_movie_params(folder:str,regex:Union[str,re.Pattern,None]=None,alphanumer
     
     return base,movies,frames,ext
 
-def get_movie(folder:str,alphanumeric_movie:bool=False):
+def get_movie(folder:str,alphanumeric_movie:bool=False,custom_regex:Union[str,None]=None):
     if alphanumeric_movie:
-        bname,movies,frames,ext = get_movie_params(folder,alphanumeric_movie=True)
+        bname,movies,frames,ext = get_movie_params(folder,alphanumeric_movie=True,regex=custom_regex)
         framePaths = {m:{f:f"{bname}_s{m}_t{f}{ext}" for f in frames[m]} for m in movies}
         return ImageMapMovie[str](movies,frames,folder,framePaths)
     else:
-        bname,movies,frames,ext = get_movie_params(folder,alphanumeric_movie=False)
+        bname,movies,frames,ext = get_movie_params(folder,alphanumeric_movie=False,regex=custom_regex)
         framePaths = {m:{f:f"{bname}_s{m}_t{f}{ext}" for f in frames[m]} for m in movies}
         return ImageMapMovie[int](movies,frames,folder,framePaths)
 

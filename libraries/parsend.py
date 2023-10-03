@@ -1,6 +1,4 @@
 import itertools
-from msilib.schema import Error
-import random
 import re
 from typing import Dict, List, Tuple
 from libraries.parse_moviefolder import filename_regex
