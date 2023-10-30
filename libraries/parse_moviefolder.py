@@ -1,4 +1,5 @@
 
+from pathlib import Path
 from typing import Dict, List, Literal, Sequence, Tuple, Union, overload
 from libraries.movie_reading import ImageMapMovie
 import os
@@ -13,7 +14,7 @@ def get_movie_params(folder:str,regex:Union[str,re.Pattern,None]=None,alphanumer
 @overload
 def get_movie_params(folder:str,regex:Union[str,re.Pattern,None]=None,alphanumeric_movie:Literal[True]=...)->Tuple[str,Sequence[str],Dict[str,Sequence[int]],str]: ...
 
-def get_movie_params(folder:str,regex:Union[str,re.Pattern,None]=None,alphanumeric_movie:bool=False):
+def get_movie_params(folder:Union[str,Path],regex:Union[str,re.Pattern,None]=None,alphanumeric_movie:bool=False):
     if regex is None:
         regex = filename_regex_alphanumeric if alphanumeric_movie else filename_regex
     imagematches = [m for m in (re.match(regex,s) for s in os.listdir(folder)) if m is not None]
@@ -44,7 +45,12 @@ def get_movie_params(folder:str,regex:Union[str,re.Pattern,None]=None,alphanumer
     
     return base,movies,frames,ext
 
-def get_movie(folder:str,alphanumeric_movie:bool=False,custom_regex:Union[str,None]=None):
+@overload
+def get_movie(folder:Union[str,Path],alphanumeric_movie:Literal[False]=False,custom_regex:Union[str,None]=None)->ImageMapMovie[int]:...
+@overload
+def get_movie(folder:Union[str,Path],alphanumeric_movie:Literal[True]=False,custom_regex:Union[str,None]=None)->ImageMapMovie[str]:...
+
+def get_movie(folder:Union[str,Path],alphanumeric_movie:bool=False,custom_regex:Union[str,None]=None):
     if alphanumeric_movie:
         bname,movies,frames,ext = get_movie_params(folder,alphanumeric_movie=True,regex=custom_regex)
         framePaths = {m:{f:f"{bname}_s{m}_t{f}{ext}" for f in frames[m]} for m in movies}

@@ -121,7 +121,7 @@ class ImageMapMovie(KeyedMovie[MovieKey]):
         self.frames = frames;
         self.framePaths = framePaths
 
-    def __getsequence__(self, key: MovieKey) -> MovieSequence[MovieKey]:
+    def __getsequence__(self, key: MovieKey) -> ImageMapSequence[MovieKey]:
         if key not in self.movies:
             raise IndexError(f"Movie {key} not in specified movie range: {self.movies}");
         return ImageMapSequence(self.frames[key],self.framePaths[key],self.folder,key);
@@ -167,7 +167,7 @@ class ImageMapSequence(FramedMovieSequence[MovieKey]):
         self.movie = movie;
         self.folder = Path(folder);
     
-    def __slice__(self, frSlice: slice) -> MovieSequence[MovieKey]:
+    def __slice__(self, frSlice: slice) -> ImageMapSequence[MovieKey]:
         return ImageMapSequence(self.frames[frSlice],self.frameDict,self.folder,self.movie);
     
     def __readframe__(self, frame: int) -> ndarray:
