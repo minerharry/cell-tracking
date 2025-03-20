@@ -76,6 +76,8 @@ def apply_qc(in_tracks:Dict[int,Dict[int,DataFrame]],
 
         for mov,t in trims.items():
             for (track,(start,end)) in t.items():
+
+                if start is None and end is None: continue
                 
                 #get 'frame' column
                 framec=out_tracks[mov][track]['frame']
