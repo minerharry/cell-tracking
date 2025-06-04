@@ -131,4 +131,3 @@ dmypy.json
 .pyre/
 temp/**
 gcp_transfer/**
-scroll.ipynb
