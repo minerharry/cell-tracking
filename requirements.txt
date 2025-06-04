@@ -1,9 +1,12 @@
-Pillow==9.0.1
+Pillow
 tqdm
 pandas
 matplotlib
 fastprogress
 opencv-python
-scikit-image==0.19.3
+scikit-image
 mediapy
 tifffile
+jupyterlab
+git+https://github.com/minerharry/gsutilwrap.git
+git+https://github.com/minerharry/meta_cell_libraries.git
